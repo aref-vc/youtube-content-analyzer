@@ -13,6 +13,7 @@ from models.schemas import (
 )
 from services.youtube_extractor import YouTubeExtractor
 from services.content_analyzer import ContentAnalyzer
+from services.viral_insights_analyzer import ViralInsightsAnalyzer
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -28,7 +29,7 @@ app = FastAPI(
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3025", "http://127.0.0.1:3025"],
+    allow_origins=["http://localhost:3025", "http://127.0.0.1:3025", "http://localhost:3026", "http://127.0.0.1:3026"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -37,6 +38,7 @@ app.add_middleware(
 # Initialize services
 youtube_extractor = YouTubeExtractor()
 content_analyzer = ContentAnalyzer()
+viral_insights = ViralInsightsAnalyzer()
 
 # In-memory cache (replace with Redis in production)
 cache = {}
@@ -170,11 +172,22 @@ async def analyze_channel(request: ChannelAnalysisRequest):
                         desc_analysis = content_analyzer.analyze_description(details.get('description', ''))
                         engagement_prediction = content_analyzer.predict_engagement(details)
                         
+                        # Add viral insights
+                        hook_analysis = viral_insights.analyze_hooks(details.get('title', ''))
+                        title_performance = viral_insights.analyze_title_performance_factors(
+                            details.get('title', ''), 
+                            details.get('view_count', 0)
+                        )
+                        
                         analyzed_videos.append({
                             'video': details,
                             'title_analysis': title_analysis,
                             'description_analysis': desc_analysis,
-                            'engagement_prediction': engagement_prediction
+                            'engagement_prediction': engagement_prediction,
+                            'viral_insights': {
+                                'hooks': hook_analysis,
+                                'title_optimization': title_performance
+                            }
                         })
                         logger.info(f"    ✅ Analysis complete for video {idx+1}")
                     else:
@@ -218,13 +231,25 @@ async def analyze_channel(request: ChannelAnalysisRequest):
                 'videos_analyzed': 0
             }
         
+        # Generate viral insights
+        logger.info(f"🚀 Generating viral insights and content recipes...")
+        content_templates = viral_insights.extract_content_templates([v['video'] for v in analyzed_videos])
+        viral_recipes = viral_insights.generate_viral_recipes(
+            {'top_videos': analyzed_videos[:10]}, 
+            patterns
+        )
+        
         results = {
             'channel': channel_info,
             'total_videos_found': len(videos),
             'videos_analyzed': len(analyzed_videos),
             'top_videos': analyzed_videos[:10],
             'content_patterns': patterns,
-            'channel_metrics': channel_metrics
+            'channel_metrics': channel_metrics,
+            'viral_insights': {
+                'content_templates': content_templates,
+                'viral_recipes': viral_recipes
+            }
         }
         
         processing_time = time.time() - start_time
@@ -431,10 +456,10 @@ def _calculate_channel_metrics(analyzed_videos: List[Dict]) -> Dict[str, Any]:
     title_scores = [v['title_analysis'].get('effectiveness_score', 0) for v in analyzed_videos]
     seo_scores = [v['description_analysis'].get('seo_score', 0) for v in analyzed_videos]
     
-    # Views and engagement
-    total_views = sum(v['video'].get('view_count', 0) for v in analyzed_videos)
-    total_likes = sum(v['video'].get('like_count', 0) for v in analyzed_videos)
-    total_comments = sum(v['video'].get('comment_count', 0) for v in analyzed_videos)
+    # Views and engagement (handle None values)
+    total_views = sum(v['video'].get('view_count') or 0 for v in analyzed_videos)
+    total_likes = sum(v['video'].get('like_count') or 0 for v in analyzed_videos)
+    total_comments = sum(v['video'].get('comment_count') or 0 for v in analyzed_videos)
     
     # Calculate averages
     import numpy as np

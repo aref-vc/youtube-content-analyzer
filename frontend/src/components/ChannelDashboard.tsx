@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { youtubeAPI } from '../services/api';
 import VideoCard from './VideoCard';
 import PatternAnalysis from './PatternAnalysis';
+import ViralInsights from './ViralInsights';
 
 interface ChannelDashboardProps {
   channelUrl?: string;
@@ -12,7 +13,7 @@ const ChannelDashboard: React.FC<ChannelDashboardProps> = ({ channelUrl, searchR
   const [channelData, setChannelData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedVideo, setSelectedVideo] = useState<any>(null);
-  const [activeTab, setActiveTab] = useState<'overview' | 'videos' | 'patterns' | 'analysis'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'videos' | 'patterns' | 'viral'>('overview');
 
   useEffect(() => {
     if (channelUrl) {
@@ -223,6 +224,16 @@ const ChannelDashboard: React.FC<ChannelDashboardProps> = ({ channelUrl, searchR
           >
             Patterns
           </button>
+          <button
+            onClick={() => setActiveTab('viral')}
+            className={`px-6 py-2 rounded-full font-semibold transition-all duration-200 whitespace-nowrap ${
+              activeTab === 'viral'
+                ? 'bg-[#ea580c] text-white'
+                : 'border border-[#868686] text-[#868686] hover:border-[#FFF] hover:text-[#FFF]'
+            }`}
+          >
+            Viral Insights
+          </button>
         </div>
 
         <div className="min-h-[400px]">
@@ -231,6 +242,11 @@ const ChannelDashboard: React.FC<ChannelDashboardProps> = ({ channelUrl, searchR
           {activeTab === 'patterns' && (
             <PatternAnalysis 
               patterns={channelData?.content_patterns || searchResults?.data?.patterns}
+            />
+          )}
+          {activeTab === 'viral' && (
+            <ViralInsights 
+              data={channelData || searchResults?.data}
             />
           )}
         </div>
