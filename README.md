@@ -4,6 +4,8 @@ A powerful tool to analyze YouTube channels and content patterns using yt-dlp an
 
 ![YouTube Content Analyzer Dashboard](./screenshot.png)
 
+![YouTube Content Analyzer Results](./screenshot-results.png)
+
 ## 🎉 What's New in v3.0
 
 ### Enhanced Viral Insights with Actionable Takeaways
