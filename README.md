@@ -1,6 +1,8 @@
-# YouTube Content Analyzer v3.0
+# YouTube Content Analyzer v3.0 🚀
 
 A powerful tool to analyze YouTube channels and content patterns using yt-dlp and AI-powered NLP analysis. No YouTube API key required!
+
+![YouTube Content Analyzer Dashboard](./screenshot.png)
 
 ## 🎉 What's New in v3.0
 
